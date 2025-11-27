@@ -7,3 +7,4 @@ architecture/
 uv.lock
 .vscode/
 .venv/
+.idea/

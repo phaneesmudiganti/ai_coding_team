@@ -1,10 +1,11 @@
 collect_requirements:
   description: >
-    Read requirements.txt and convert its contents into a structured, unambiguous,
+    Read {requirements_path} and convert its contents into a structured, unambiguous,
     and detailed requirement set. Extract functional modules, constraints, acceptance
     criteria, and assumptions. Surface missing information and resolve ambiguity.
     Produce a requirement specification that eliminates uncertainty.
-    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+    Once the requirement specification is complete, use the `PlanProjectTool` and write the final content
+    to the file named 'requirements.md' under the folder structure '{output_dir}/{project_name}/requirements'
   expected_output: >
     A structured requirements specification including:
       - Summary and project intent
@@ -16,13 +17,13 @@ collect_requirements:
   markdown: true
   agent: product_manager
   uses_tools:
+    - FileReadTool
     - PlanProjectTool
-  override_tool_args: true
   tool_arguments:
     requirements_path: "{{ requirements_path }}"
     project_name: "{{ project_name }}"
-    output_dir: "{{ output_dir }}/{{ project_name }}/requirements/"
-    file_name: "requirements_initial.md"
+    output_dir: "{{ output_dir }}"
+    file_name: "requirements.md"
     content: "{{ task.output }}"
 
 architect_project:
@@ -31,9 +32,10 @@ architect_project:
     implementation strategy. Define system boundaries, components, APIs, frontend/backed
     coordination strategy, data flows, error contracts, folder structure, and technology decisions.
     Produce clear implementation sequencing the engineering team can follow without ambiguity.
-    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
     Here are the finalized requirements you must base your work on:
     {{ task('collect_requirements').output }}
+    Once the architecture specification is complete, use the `ArchitectureWriterTool` and write the final content
+    to the file named 'architecture.md' under the folder structure '{output_dir}/{project_name}/architecture'
   expected_output: >
     A full architecture and implementation plan including:
       - System architecture diagram(s)
@@ -51,10 +53,9 @@ architect_project:
     - collect_requirements
   uses_tools:
     - ArchitectureWriterTool
-  override_tool_args: true
-  config:
+  tool_arguments:
     project_name: "{{ project_name }}"
-    output_dir: "{{ output_dir }}/{{ project_name }}/architecture/"
+    output_dir: "{{ output_dir }}"
     file_name: "architecture.md"
     content: "{{ task.output }}"
 
@@ -64,9 +65,11 @@ build_backend:
     documented, testable, and maintainable backend services, APIs, business logic,
     and supporting infrastructure components. Ensure alignment with requirements
     and architecture without scope drift.
-    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
     Here is the architecture you must strictly follow:
     {{ task('architect_project').output }}
+    Once the code is successfully generated, 
+    - use the tool `BuildProjectTool` to create the 'output/{output_dir}' folder
+    - use the tool `GenerateCodeTool` and write the final content into the file in the folder created by the `BuildProjectTool`.
   expected_output: >
     A complete backend implementation including:
       - API routes and controllers
@@ -78,16 +81,18 @@ build_backend:
   agent: backend_engineer
   context:
     - architect_project
-  include_inputs: true
   uses_tools:
     - BuildProjectTool
     - GenerateCodeTool
-  override_tool_args: true
   tool_arguments:
-    module_name: "backend"
-    project_name: "{{ project_name }}"
-    output_dir: "{{ output_dir }}/{{ project_name }}/backend/"
-    code_stub: "{{ task.output }}"
+    BuildProjectTool:
+      output_dir: "{{ output_dir }}"
+
+    GenerateCodeTool:
+      module_name: "backend"
+      project_name: "{{ project_name }}"
+      output_dir: "{{ output_dir }}"
+      code_stub: "{{ task.output }}"
 
 build_frontend:
   description: >

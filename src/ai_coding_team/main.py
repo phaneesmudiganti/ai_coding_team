@@ -24,8 +24,8 @@ def run():
     """
     inputs = {
         'requirements_path': 'requirements.txt',
-        'project_name': 'MyProject',
-        'output_dir': 'output'
+        'project_name': 'myproject',
+        'output_dir': './output'
     }
 
     try:

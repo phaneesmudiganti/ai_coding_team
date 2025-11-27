@@ -1,4 +1,5 @@
 from crewai import Agent, Crew, Process, Task, LLM
+from crewai_tools import FileReadTool
 import logging
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
@@ -54,7 +55,7 @@ class AiCodingTeam():
         return Agent(
             config=self._inject_rules(self.agents_config['product_manager']), 
             llm=self.llm,
-            tools=[PlanProjectTool(), ArchitectureWriterTool()],
+            tools=[FileReadTool(), PlanProjectTool()],
             verbose=True,
             force_tool_execution=True
         )
@@ -80,9 +81,6 @@ class AiCodingTeam():
             verbose=True,
             allow_code_execution=True,
             code_execution_mode="safe",
-            max_execution_time=1800,
-            max_retry_limit=3,
-            force_tool_execution=True
         )
 
     @agent
@@ -95,9 +93,6 @@ class AiCodingTeam():
             verbose=True,
             allow_code_execution=True,
             code_execution_mode="safe",
-            max_execution_time=1800,
-            max_retry_limit=3,
-            force_tool_execution=True
         )
 
     @agent
@@ -110,9 +105,6 @@ class AiCodingTeam():
             verbose=True,
             allow_code_execution=True,
             code_execution_mode="safe",
-            max_execution_time=1800,
-            max_retry_limit=3,
-            force_tool_execution=True
         )
 
     @agent
@@ -123,7 +115,6 @@ class AiCodingTeam():
             tools=[WriteDocsTool()],
             llm=self.llm,
             verbose=True,
-            force_tool_execution=True
         )
 
     @agent
@@ -134,7 +125,6 @@ class AiCodingTeam():
             tools=[ReviewRepoTool()],
             llm=self.llm,
             verbose=True,
-            force_tool_execution=True
         )
 
     @agent
@@ -145,7 +135,6 @@ class AiCodingTeam():
             tools=[BuildProjectTool(), GenerateCodeTool(), ReviewRepoTool(), WriteDocsTool()],
             llm=self.llm,
             verbose=True,
-            force_tool_execution=True
         )
 
     @task

@@ -60,6 +60,10 @@ class GenerateCodeTool(BaseTool):
 
     def _run(self, module_name: str, project_name: str, output_dir: str, code_stub: str):
         logger.info("GenerateCodeTool _run started")
+        logger.info("Variables inside custom_tool.py --> GenerateCodeTool --> _run method")
+        logger.info(f"Module Name: {module_name}")
+        logger.info(f"Project Name: {project_name}")
+        logger.info(f"Output Directory: {output_dir}")
         result = GenerationOps.write_code(module_name, project_name, output_dir, code_stub)
         logger.info("GenerateCodeTool _run finished")
         return result
