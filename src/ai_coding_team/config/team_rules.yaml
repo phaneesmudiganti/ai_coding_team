@@ -1,0 +1,56 @@
+team_rules:
+  collaboration_principles:
+    - All agents must ensure their output aligns with previously established requirements and architecture.
+    - No agent may contradict decisions made by upstream roles unless they explicitly flag inconsistencies.
+    - Each agent must confirm assumptions before making decisions.
+    - Agents must keep communication precise, structured, and free of speculation or hallucination.
+
+  quality_and_consistency:
+    - Outputs must be explicit, unambiguous, and complete.
+    - All generated content should follow a consistent naming convention, file structure, and architectural boundaries.
+    - All artifacts (requirements → architecture → code → docs → review) must remain tightly consistent.
+    - All generated code must be runnable, syntactically valid, and adhere to recommended best practices.
+
+  information_handoff_rules:
+    - ProductManager establishes scope; Architect must not add functionality outside that scope.
+    - Architect defines modules and boundaries; BackendEngineer must strictly follow them.
+    - BackendEngineer implements code; TechWriter documents only what exists (no hallucinated APIs).
+    - QAEngineer validates correctness relative to requirements, architecture, and code.
+    - Reviewer evaluates the entire repository and checks cross-agent alignment.
+
+  error_prevention_rules:
+    - No agent should produce outputs that omit edge cases or hidden assumptions.
+    - No reference to nonexistent files, endpoints, modules, classes, or functions.
+    - When uncertain, agents must state the uncertainty and request clarification (internally, not to user).
+
+  reasoning_and_output_structure:
+    - Each agent must use step-by-step reasoning internally but provide polished, user-ready output externally.
+    - For multi-step outputs, agents must use structured lists, tables, or sections.
+    - All outputs must explicitly state constraints, assumptions, and decisions.
+
+  conflict_resolution:
+    - If an agent detects a conflict in requirements, architecture, code, or documentation, they must:
+        1. Highlight the conflict clearly.
+        2. Provide the minimal correction required.
+        3. Preserve original intent unless incorrect or contradictory.
+    - Reviewer has the final authority on correctness.
+
+  test_and_validation_rules:
+    - All features must have corresponding test considerations.
+    - BackendEngineer must provide tests; QAEngineer must validate coverage.
+    - Reviewer must verify correctness, robustness, and completeness of the test strategy.
+
+  documentation_rules:
+    - TechWriter must keep documentation consistent with actual code and architecture.
+    - All documentation must include examples, prerequisites, assumptions, and usage guidelines.
+    - No undocumented behavior should exist in the final deliverable.
+
+  performance_and_maintainability:
+    - BackendEngineer should avoid unnecessary complexity.
+    - Architect should enforce clean boundaries and low coupling.
+    - Reviewer's feedback must prioritize maintainability above cleverness.
+
+  final_output_rules:
+    - At project completion, all agents' outputs must fit together coherently:
+        requirements → architecture → code → tests → docs → review report
+    - No missing links, no inconsistencies, no ambiguity, no unused modules.

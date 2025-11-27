@@ -1,0 +1,260 @@
+collect_requirements:
+  description: >
+    Read requirements.txt and convert its contents into a structured, unambiguous,
+    and detailed requirement set. Extract functional modules, constraints, acceptance
+    criteria, and assumptions. Surface missing information and resolve ambiguity.
+    Produce a requirement specification that eliminates uncertainty.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+  expected_output: >
+    A structured requirements specification including:
+      - Summary and project intent
+      - Functional and non-functional requirements
+      - Assumptions and constraints
+      - User flows or usage scenarios (if derivable)
+      - Clarification questions or gaps (if any)
+      - Acceptance criteria and validation rules
+  markdown: true
+  agent: product_manager
+  uses_tools:
+    - PlanProjectTool
+  override_tool_args: true
+  tool_arguments:
+    requirements_path: "{{ requirements_path }}"
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/requirements/"
+    file_name: "requirements_initial.md"
+    content: "{{ task.output }}"
+
+architect_project:
+  description: >
+    Using the finalized requirements, create a modular system architecture and
+    implementation strategy. Define system boundaries, components, APIs, frontend/backed
+    coordination strategy, data flows, error contracts, folder structure, and technology decisions.
+    Produce clear implementation sequencing the engineering team can follow without ambiguity.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+    Here are the finalized requirements you must base your work on:
+    {{ task('collect_requirements').output }}
+  expected_output: >
+    A full architecture and implementation plan including:
+      - System architecture diagram(s)
+      - Frontend and backend module breakdown
+      - API contracts and communication boundaries
+      - Data modeling approach and persistence strategy (if applicable)
+      - Directory structure and naming conventions
+      - Technology stack selection with rationale
+      - Failure scenarios and resilience strategy
+      - Implementation order with dependencies
+  markdown: true
+  agent: architect
+  result_as_input: true
+  context:
+    - collect_requirements
+  uses_tools:
+    - ArchitectureWriterTool
+  override_tool_args: true
+  config:
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/architecture/"
+    file_name: "architecture.md"
+    content: "{{ task.output }}"
+
+build_backend:
+  description: >
+    Implement the full backend as defined by the architecture. Produce modular,
+    documented, testable, and maintainable backend services, APIs, business logic,
+    and supporting infrastructure components. Ensure alignment with requirements
+    and architecture without scope drift.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+    Here is the architecture you must strictly follow:
+    {{ task('architect_project').output }}
+  expected_output: >
+    A complete backend implementation including:
+      - API routes and controllers
+      - Business logic, utilities, and shared modules
+      - Configuration and environment handling
+      - Validation and error handling patterns
+      - Unit and integration tests
+      - Working end-to-end flows aligned with requirements
+  agent: backend_engineer
+  context:
+    - architect_project
+  include_inputs: true
+  uses_tools:
+    - BuildProjectTool
+    - GenerateCodeTool
+  override_tool_args: true
+  tool_arguments:
+    module_name: "backend"
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/backend/"
+    code_stub: "{{ task.output }}"
+
+build_frontend:
+  description: >
+    Implement an intuitive, accessible, responsive frontend aligned with architectural plans
+    and requirements. Build reusable UI components, designer-driven user experience patterns,
+    state management, routing, and backend API integrations. Ensure graceful handling of errors,
+    connectivity issues, loading states, and edge cases.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+    Here is the architecture you must strictly follow:
+    {{ task('architect_project').output }}
+  expected_output: >
+    A complete frontend implementation including:
+      - Component library and layout scaffolding
+      - Routing and state management patterns
+      - API service wrappers and integration points
+      - Accessibility and responsive layout compliance
+      - UI tests (snapshot, unit, or component)
+      - Theming, styling conventions, and documentation
+  agent: frontend_engineer
+  context:
+    - architect_project
+    - build_backend
+  include_inputs: true
+  uses_tools:
+    - BuildProjectTool
+    - GenerateCodeTool
+  override_tool_args: true
+  tool_arguments:
+    module_name: "frontend"
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/frontend/"
+    code_stub: "{{ task.output }}"
+    file_extension: "tsx"
+
+quality_assurance:
+  description: >
+    Perform a full validation of the implementation. Analyze code quality, logical correctness,
+    resilience, performance considerations, API contract correctness, and test coverage. Identify
+    missing edge cases, failure modes, inconsistent logic, architectural drift, or security gaps.
+    Provide structured QA feedback and propose fixes where needed.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+  expected_output: >
+    A QA Report including:
+      - Test coverage summary
+      - Observed edge cases and untested paths
+      - Functional verification results
+      - API behavior validation (happy + failure paths)
+      - Code quality flags or smells
+      - Security or resilience gaps
+      - Recommendations for fixes before documentation and final review
+  agent: qa_engineer
+  context:
+    - build_backend
+    - build_frontend
+  uses_tools:
+    - GenerateTestsTool
+    - RunTestsTool
+  override_tool_args: true
+  tool_arguments:
+    module_name: "{{ module_name }}"
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/tests/"
+    test_stub: "{{ task.output }}"
+
+build_infrastructure_and_ci_cd:
+  description: >
+    Create production-ready DevOps automation including CI/CD workflows, containerization,
+    environment handling, security, observability, and deployment orchestration. Ensure
+    the system can be built, tested, deployed, rolled back, and monitored in a repeatable,
+    secure, and automated manner.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+  expected_output: >
+    A complete DevOps delivery pipeline including:
+      - Dockerfiles / build scripts
+      - CI/CD workflow(s) for build, test, deploy, rollback
+      - Infrastructure-as-Code templates (if applicable)
+      - Secrets, config, and environment convention definitions
+      - Observability hooks (logging, metrics, monitoring guidance)
+      - Deployment runbook and DevOps documentation
+  agent: devops_engineer
+  context:
+    - architect_project
+    - build_backend
+    - build_frontend
+  uses_tools:
+    - GenerateCodeTool
+  override_tool_args: true
+  tool_arguments:
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/infra/"
+    module_name: "infrastructure"
+    code_stub: "{{ task.output }}"
+    file_extension: "yaml"
+
+write_docs:
+  description: >
+    Create clear, structured documentation explaining the system architecture,
+    usage instructions, development workflows, deployment approach, and onboarding guidance.
+    Documentation should enable new developers and users to adopt the system without friction.
+    You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+  expected_output: >
+    A complete documentation suite including:
+      - High-level overview (README.md)
+      - Architecture and design rationale (Architecture.md)
+      - Frontend and backend module documentation
+      - Deployment and operational instructions
+      - Contribution and development workflow guidance
+      - Testing and debugging guides
+  agent: tech_writer
+  context:
+    - architect_project
+    - build_backend
+    - build_frontend
+  uses_tools:
+    - GenerateCodeTool
+  override_tool_args: true
+  tool_arguments:
+    project_name: "{{ project_name }}"
+    output_dir: "{{ output_dir }}/{{ project_name }}/docs/"
+    module_name: "documentation"
+    code_stub: "{{ task.output }}"
+    file_extension: "md"
+
+review_repo:
+  description: >
+      Conduct a comprehensive evaluation of the entire repository including requirements,
+      code structure, frontend/backend alignment, CI/CD, infrastructure automation,
+      test coverage, and documentation. Validate correctness, maintainability, security,
+      performance expectations, and compliance with architectural intent.
+
+      After your human-readable analysis, you MUST output a final JSON block that strictly
+      conforms to the following schema, inside a ```json fenced code block:
+
+      {
+        "status": "approved" | "needs_changes",
+        "assigned_to": "backend_engineer" | "frontend_engineer" | "qa_engineer" | "devops_engineer",
+        "issues": [
+          {
+            "id": "ISSUE-1",
+            "summary": "Short description of the issue",
+            "details": "Longer explanation of the problem and where it appears.",
+            "severity": "critical" | "major" | "minor",
+            "modules": ["path/to/file1.py", "path/to/file2.ts"]
+          }
+        ]
+      }
+
+      Do not add extra fields. If there are no issues, set "status": "approved" and
+      use an empty array for "issues".
+      You must use the tool arguments exactly as defined in the configuration. Do not rename, replace, or fabricate values.
+  expected_output: >
+    A full engineering review in REVIEW.md including:
+      - Summary and confidence score
+      - Critical issues (blockers)
+      - Major issues (need resolution)
+      - Minor cosmetic or quality improvements
+      - Missing tests, docs, or deviations from plan
+      - Recommendations for improvement before release
+      - Validation mapping of implementation vs architecture and requirements
+  agent: reviewer
+  context:
+    - architect_project
+    - build_backend
+    - build_frontend
+    - write_docs
+  uses_tools:
+    - RunTestsTool
+  override_tool_args: true
+  tool_arguments:
+    repo_path: "{{ output_dir }}/{{ project_name }}"
